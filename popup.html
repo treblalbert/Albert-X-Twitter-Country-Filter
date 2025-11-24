@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>Albert's X/Twitter Country Filter</h3>
+            <div class="version">v1.1</div>
+        </div>
+        
+        <!-- Master Toggle -->
+        <div class="toggle-section">
+            <label class="toggle-label">
+                <span>Extension Enabled</span>
+                <label class="switch">
+                    <input type="checkbox" id="masterToggle">
+                    <span class="slider"></span>
+                </label>
+            </label>
+        </div>
+
+        <!-- Filter Mode Selection -->
+        <div class="mode-section">
+            <label class="mode-option">
+                <input type="radio" name="filterMode" value="dimmed" checked>
+                <span class="radio-custom"></span>
+                Dim Mode (Show with warning)
+            </label>
+            <label class="mode-option">
+                <input type="radio" name="filterMode" value="removed">
+                <span class="radio-custom"></span>
+                Remove Mode (Completely hide)
+            </label>
+        </div>
+        
+        <div class="search-section">
+            <input type="text" id="countrySearch" placeholder="Search countries..." class="search-input">
+        </div>
+        
+        <div class="controls">
+            <button id="selectAll">Select All</button>
+            <button id="deselectAll">Deselect All</button>
+        </div>
+        
+        <div id="countriesList" class="countries-list">
+            <!-- Countries will be loaded here -->
+        </div>
+        
+        <!-- Stats Display -->
+        <div id="statsDisplay" class="stats-display">
+            <!-- Stats will be loaded here -->
+        </div>
+        
+        <div class="status">
+            <button id="refreshBtn" class="refresh-btn">Rescan Page</button>
+            <button id="resetStatsBtn" class="reset-stats">Reset Stats</button>
+            <div id="statusMessage"></div>
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
