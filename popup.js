@@ -8,6 +8,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const resetStatsBtn = document.getElementById('resetStatsBtn');
     const statusMessage = document.getElementById('statusMessage');
     const filterModeRadios = document.querySelectorAll('input[name="filterMode"]');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // User and keyword filtering elements
+    const usernameInput = document.getElementById('usernameInput');
+    const addUsernameBtn = document.getElementById('addUsernameBtn');
+    const usersList = document.getElementById('usersList');
+    const keywordInput = document.getElementById('keywordInput');
+    const addKeywordBtn = document.getElementById('addKeywordBtn');
+    const keywordsList = document.getElementById('keywordsList');
 
     // Load country data
     const countries = [
@@ -75,9 +85,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         enabled: true,
         filterMode: 'dimmed',
         blockedCountries: {},
+        blockedUsers: [],
+        blockedKeywords: [],
         detectedCountries: {}
     };
     let currentStats = {};
+
+    // Tab switching
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Update buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update contents
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabId}Tab`).classList.add('active');
+        });
+    });
 
     // Load settings from storage
     async function loadSettings() {
@@ -96,6 +123,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateUI();
         updateStatsDisplay();
         renderCountries();
+        renderUsers();
+        renderKeywords();
     }
 
     // Update UI based on settings
@@ -176,6 +205,107 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // Render blocked users list
+    function renderUsers() {
+        usersList.innerHTML = '';
+        
+        if (settings.blockedUsers.length === 0) {
+            usersList.innerHTML = '<div class="no-items">No users blocked</div>';
+            return;
+        }
+        
+        settings.blockedUsers.forEach(username => {
+            const userRow = document.createElement('div');
+            userRow.className = 'item-row';
+            userRow.innerHTML = `
+                <span class="item-text">${username}</span>
+                <button class="remove-btn" data-username="${username}">Remove</button>
+            `;
+            
+            usersList.appendChild(userRow);
+        });
+        
+        // Add event listeners to remove buttons
+        usersList.querySelectorAll('.remove-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const username = this.getAttribute('data-username');
+                removeUser(username);
+            });
+        });
+    }
+
+    // Render blocked keywords list
+    function renderKeywords() {
+        keywordsList.innerHTML = '';
+        
+        if (settings.blockedKeywords.length === 0) {
+            keywordsList.innerHTML = '<div class="no-items">No keywords blocked</div>';
+            return;
+        }
+        
+        settings.blockedKeywords.forEach(keyword => {
+            const keywordRow = document.createElement('div');
+            keywordRow.className = 'item-row';
+            keywordRow.innerHTML = `
+                <span class="item-text">${keyword}</span>
+                <button class="remove-btn" data-keyword="${keyword}">Remove</button>
+            `;
+            
+            keywordsList.appendChild(keywordRow);
+        });
+        
+        // Add event listeners to remove buttons
+        keywordsList.querySelectorAll('.remove-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const keyword = this.getAttribute('data-keyword');
+                removeKeyword(keyword);
+            });
+        });
+    }
+
+    // Add user to blocked list
+    function addUser(username) {
+        if (!username) return;
+        
+        // Clean username (remove @ if present)
+        const cleanUsername = username.replace('@', '').trim();
+        
+        if (cleanUsername && !settings.blockedUsers.includes(cleanUsername)) {
+            settings.blockedUsers.push(cleanUsername);
+            saveSettings();
+            renderUsers();
+            usernameInput.value = '';
+        }
+    }
+
+    // Remove user from blocked list
+    function removeUser(username) {
+        settings.blockedUsers = settings.blockedUsers.filter(user => user !== username);
+        saveSettings();
+        renderUsers();
+    }
+
+    // Add keyword to blocked list
+    function addKeyword(keyword) {
+        if (!keyword) return;
+        
+        const cleanKeyword = keyword.trim();
+        
+        if (cleanKeyword && !settings.blockedKeywords.includes(cleanKeyword)) {
+            settings.blockedKeywords.push(cleanKeyword);
+            saveSettings();
+            renderKeywords();
+            keywordInput.value = '';
+        }
+    }
+
+    // Remove keyword from blocked list
+    function removeKeyword(keyword) {
+        settings.blockedKeywords = settings.blockedKeywords.filter(kw => kw !== keyword);
+        saveSettings();
+        renderKeywords();
+    }
+
     // Save settings to storage
     async function saveSettings() {
         await chrome.storage.sync.set({ settings });
@@ -228,8 +358,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         saveSettings();
     });
 
+    // User filtering events
+    addUsernameBtn.addEventListener('click', function() {
+        addUser(usernameInput.value);
+    });
+
+    usernameInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addUser(this.value);
+        }
+    });
+
+    // Keyword filtering events
+    addKeywordBtn.addEventListener('click', function() {
+        addKeyword(keywordInput.value);
+    });
+
+    keywordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addKeyword(this.value);
+        }
+    });
+
     refreshBtn.addEventListener('click', async function() {
-        statusMessage.textContent = 'Scanning for locations...';
+        statusMessage.textContent = 'Scanning for content...';
         
         chrome.tabs.query({active: true, currentWindow: true}, async function(tabs) {
             const response = await chrome.tabs.sendMessage(tabs[0].id, {action: "getStats"});

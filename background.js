@@ -1,6 +1,6 @@
-// Background service worker for Albert's X/Twitter Country Filter
+// Background service worker for Albert's X/Twitter Filter
 chrome.runtime.onInstalled.addListener(() => {
-    console.log("Albert's X/Twitter Country Filter v1.1 installed");
+    console.log("Albert's X/Twitter Filter v2.0 installed");
     
     // Initialize default stats
     chrome.storage.sync.set({
@@ -12,7 +12,9 @@ chrome.runtime.onInstalled.addListener(() => {
         settings: {
             enabled: true,
             filterMode: 'dimmed',
-            blockedCountries: {}
+            blockedCountries: {},
+            blockedUsers: [],
+            blockedKeywords: []
         }
     });
 });

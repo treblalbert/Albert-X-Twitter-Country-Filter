@@ -1,9 +1,11 @@
-class TwitterCountryFilter {
+class TwitterFilter {
     constructor() {
         this.settings = {
             enabled: true,
             filterMode: 'dimmed',
-            blockedCountries: {}
+            blockedCountries: {},
+            blockedUsers: [],
+            blockedKeywords: []
         };
         this.detectedCountries = {};
         this.stats = {
@@ -130,21 +132,44 @@ class TwitterCountryFilter {
         }
 
         const tweet = element.closest('[data-testid="tweet"]') || element.closest('article');
-        if (!tweet || tweet.hasAttribute('data-country-filtered')) return;
+        if (!tweet || tweet.hasAttribute('data-albert-filtered')) return;
         
         this.stats.totalTweetsScanned++;
         
+        let shouldFilter = false;
+        let filterReason = '';
+        
+        // Check country filter
         const location = this.extractLocation(tweet);
         if (location && this.isCountry(location)) {
             this.stats.accountsWithLocation++;
             this.recordLocation(location);
             
             if (this.settings.blockedCountries[location]) {
-                this.filterTweet(tweet, location);
-                this.stats.tweetsHidden++;
-                this.saveStats();
-                console.log(`Filtered tweet from ${location}. Mode: ${this.settings.filterMode}`);
+                shouldFilter = true;
+                filterReason = `Country: ${location}`;
             }
+        }
+        
+        // Check user filter
+        const username = this.extractUsername(tweet);
+        if (username && this.settings.blockedUsers.includes(username)) {
+            shouldFilter = true;
+            filterReason = `User: ${username}`;
+        }
+        
+        // Check keyword filter
+        const tweetText = this.extractTweetText(tweet);
+        if (tweetText && this.containsBlockedKeyword(tweetText)) {
+            shouldFilter = true;
+            filterReason = 'Keyword match';
+        }
+        
+        if (shouldFilter) {
+            this.filterTweet(tweet, filterReason);
+            this.stats.tweetsHidden++;
+            this.saveStats();
+            console.log(`Filtered tweet - Reason: ${filterReason}. Mode: ${this.settings.filterMode}`);
         }
         
         if (this.stats.totalTweetsScanned % 10 === 0) {
@@ -152,14 +177,14 @@ class TwitterCountryFilter {
         }
     }
 
-    filterTweet(tweet, country) {
-        tweet.setAttribute('data-country-filtered', 'true');
-        tweet.setAttribute('data-filtered-country', country);
+    filterTweet(tweet, reason) {
+        tweet.setAttribute('data-albert-filtered', 'true');
+        tweet.setAttribute('data-filtered-reason', reason);
         
         if (this.settings.filterMode === 'removed') {
             this.completelyRemoveTweet(tweet);
         } else {
-            this.dimTweet(tweet, country);
+            this.dimTweet(tweet, reason);
         }
     }
 
@@ -167,7 +192,7 @@ class TwitterCountryFilter {
         tweet.style.display = 'none';
     }
 
-    dimTweet(tweet, country) {
+    dimTweet(tweet, reason) {
         tweet.style.opacity = '0.4';
         tweet.style.background = '#fff3f3';
         tweet.style.border = '2px solid #ff4444';
@@ -184,17 +209,17 @@ class TwitterCountryFilter {
         hiddenIndicator.style.borderRadius = '6px';
         hiddenIndicator.style.marginBottom = '8px';
         hiddenIndicator.style.fontWeight = 'bold';
-        hiddenIndicator.innerHTML = `🚫 HIDDEN - From: ${country}`;
+        hiddenIndicator.innerHTML = `🚫 HIDDEN - ${reason}`;
         
         // Only add indicator if not already present
-        if (!tweet.querySelector('.country-filter-indicator')) {
-            hiddenIndicator.className = 'country-filter-indicator';
+        if (!tweet.querySelector('.albert-filter-indicator')) {
+            hiddenIndicator.className = 'albert-filter-indicator';
             tweet.prepend(hiddenIndicator);
         }
     }
 
     showTweet(tweet) {
-        const filteredTweet = tweet.closest('[data-country-filtered]');
+        const filteredTweet = tweet.closest('[data-albert-filtered]');
         if (!filteredTweet) return;
         
         filteredTweet.style.display = '';
@@ -204,11 +229,11 @@ class TwitterCountryFilter {
         filteredTweet.style.padding = '';
         filteredTweet.style.margin = '';
         
-        const indicator = filteredTweet.querySelector('.country-filter-indicator');
+        const indicator = filteredTweet.querySelector('.albert-filter-indicator');
         if (indicator) indicator.remove();
         
-        filteredTweet.removeAttribute('data-country-filtered');
-        filteredTweet.removeAttribute('data-filtered-country');
+        filteredTweet.removeAttribute('data-albert-filtered');
+        filteredTweet.removeAttribute('data-filtered-reason');
     }
 
     extractLocation(tweet) {
@@ -239,6 +264,35 @@ class TwitterCountryFilter {
         if (locationMatch) return locationMatch;
 
         return null;
+    }
+
+    extractUsername(tweet) {
+        // Look for username in the tweet
+        const usernameElement = tweet.querySelector('[data-testid="User-Name"]');
+        if (usernameElement) {
+            const links = usernameElement.querySelectorAll('a[href*="/"]');
+            for (let link of links) {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('/') && !href.includes('/status/')) {
+                    const username = href.replace('/', '').replace('@', '');
+                    if (username && username !== 'home' && !username.includes(' ')) {
+                        return username.toLowerCase();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    extractTweetText(tweet) {
+        const tweetTextElement = tweet.querySelector('[data-testid="tweetText"]');
+        return tweetTextElement ? tweetTextElement.textContent.toLowerCase() : '';
+    }
+
+    containsBlockedKeyword(tweetText) {
+        return this.settings.blockedKeywords.some(keyword => 
+            tweetText.includes(keyword.toLowerCase())
+        );
     }
 
     extractCountryFromText(text) {
@@ -290,7 +344,7 @@ class TwitterCountryFilter {
 
     rescanAllTweets() {
         // Show all previously hidden tweets
-        const filteredTweets = document.querySelectorAll('[data-country-filtered]');
+        const filteredTweets = document.querySelectorAll('[data-albert-filtered]');
         filteredTweets.forEach(tweet => {
             this.showTweet(tweet);
         });
@@ -308,7 +362,7 @@ class TwitterCountryFilter {
 
 // Initialize when page is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new TwitterCountryFilter());
+    document.addEventListener('DOMContentLoaded', () => new TwitterFilter());
 } else {
-    new TwitterCountryFilter();
+    new TwitterFilter();
 }

@@ -7,8 +7,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h3>Albert's X/Twitter Country Filter</h3>
-            <div class="version">v1.1</div>
+            <h3>Albert's X/Twitter Filter</h3>
+            <div class="version">v2.0</div>
         </div>
         
         <!-- Master Toggle -->
@@ -35,18 +35,52 @@
                 Remove Mode (Completely hide)
             </label>
         </div>
-        
-        <div class="search-section">
-            <input type="text" id="countrySearch" placeholder="Search countries..." class="search-input">
-        </div>
-        
-        <div class="controls">
-            <button id="selectAll">Select All</button>
-            <button id="deselectAll">Deselect All</button>
-        </div>
-        
-        <div id="countriesList" class="countries-list">
-            <!-- Countries will be loaded here -->
+
+        <!-- Filter Tabs -->
+        <div class="tabs-section">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="countries">Countries</button>
+                <button class="tab-button" data-tab="users">Users</button>
+                <button class="tab-button" data-tab="keywords">Keywords</button>
+            </div>
+            
+            <!-- Countries Tab -->
+            <div class="tab-content active" id="countriesTab">
+                <div class="search-section">
+                    <input type="text" id="countrySearch" placeholder="Search countries..." class="search-input">
+                </div>
+                
+                <div class="controls">
+                    <button id="selectAll">Select All</button>
+                    <button id="deselectAll">Deselect All</button>
+                </div>
+                
+                <div id="countriesList" class="countries-list">
+                    <!-- Countries will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Users Tab -->
+            <div class="tab-content" id="usersTab">
+                <div class="add-item-section">
+                    <input type="text" id="usernameInput" placeholder="Enter username (e.g., @user or user)" class="search-input">
+                    <button id="addUsernameBtn" class="add-btn">Add User</button>
+                </div>
+                <div id="usersList" class="items-list">
+                    <!-- Blocked users will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Keywords Tab -->
+            <div class="tab-content" id="keywordsTab">
+                <div class="add-item-section">
+                    <input type="text" id="keywordInput" placeholder="Enter keyword to filter" class="search-input">
+                    <button id="addKeywordBtn" class="add-btn">Add Keyword</button>
+                </div>
+                <div id="keywordsList" class="items-list">
+                    <!-- Blocked keywords will be loaded here -->
+                </div>
+            </div>
         </div>
         
         <!-- Stats Display -->

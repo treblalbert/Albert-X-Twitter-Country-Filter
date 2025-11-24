@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Albert's X/Twitter Country Filter",
-  "version": "1.1",
-  "description": "Filter tweets based on account country location with multiple modes",
+  "name": "Albert's X/Twitter Filter",
+  "version": "2.0",
+  "description": "Filter tweets based on country location, users, and keywords with multiple modes",
   "permissions": ["storage", "activeTab"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Albert's X/Twitter Country Filter"
+    "default_title": "Albert's X/Twitter Filter"
   },
   "content_scripts": [
     {
